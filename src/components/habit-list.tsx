@@ -120,123 +120,125 @@ export function HabitList({ habits, onToggleCompletion, onDeleteHabit, onUpdateH
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-[2fr_repeat(7,1fr)] gap-2" ref={listRef} onTouchStart={handlePullToRefresh}>
-            <div className="font-medium">Habit</div>
-            {dates.map((date) => (
-              <div key={date.dateString} className="text-center">
-                <div className={cn("text-xs text-muted-foreground", date.isToday && "font-bold text-primary")}>
-                  {date.display}
+          <div className="overflow-x-auto pb-2">
+            <div className="min-w-full grid grid-cols-[minmax(120px,2fr)_repeat(7,minmax(40px,1fr))] gap-2" ref={listRef} onTouchStart={handlePullToRefresh}>
+              <div className="font-medium">Habit</div>
+              {dates.map((date) => (
+                <div key={date.dateString} className="text-center">
+                  <div className={cn("text-xs text-muted-foreground", date.isToday && "font-bold text-primary")}>
+                    {date.display}
+                  </div>
+                  <div className={cn("font-medium", date.isToday && "text-primary")}>{date.day}</div>
                 </div>
-                <div className={cn("font-medium", date.isToday && "text-primary")}>{date.day}</div>
-              </div>
-            ))}
-
-            <AnimatePresence initial={false}>
-              {sortedHabits.map((habit) => (
-                <React.Fragment key={habit.id}>
-                  <motion.div
-                    className="flex items-center justify-between pr-2"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div
-                              className={cn(
-                                "flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full",
-                                habit.priority === 3 && "bg-red-100 text-red-600",
-                                habit.priority === 2 && "bg-amber-100 text-amber-600",
-                                habit.priority === 1 && "bg-blue-100 text-blue-600",
-                              )}
-                            >
-                              {getCategoryIcon(habit.category)}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{habit.category}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <span className="truncate font-medium">{habit.name}</span>
-                      {habit.priority === 3 && (
-                        <Badge variant="destructive" className="ml-1 px-1">
-                          <Star className="h-3 w-3" />
-                        </Badge>
-                      )}
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setEditingHabit(habit)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onDeleteHabit(habit.id)} className="text-destructive">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </motion.div>
-
-                  {dates.map((date) => {
-                    const isCompleted = habit.completedDates.includes(date.dateString)
-                    return (
-                      <div key={`${habit.id}-${date.dateString}`} className="flex justify-center">
-                        <motion.div whileTap={{ scale: 0.9 }}>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className={cn(
-                              "h-8 w-8 rounded-full border-2 transition-all duration-300",
-                              isCompleted ? "bg-primary border-primary text-primary-foreground" : "bg-background",
-                              date.isToday && !isCompleted && "border-primary border-dashed",
-                            )}
-                            onClick={() => {
-                              if (!isCompleted) {
-                                // Add confetti animation when completing a habit
-                                const button = document.createElement("div")
-                                button.className = "fixed inset-0 pointer-events-none z-50"
-                                document.body.appendChild(button)
-
-                                // Clean up after animation
-                                setTimeout(() => {
-                                  if (button.parentNode) {
-                                    button.parentNode.removeChild(button)
-                                  }
-                                }, 2000)
-                              }
-                              onToggleCompletion(habit.id, date.dateString)
-                            }}
-                          >
-                            <AnimatePresence mode="wait">
-                              {isCompleted && (
-                                <motion.div
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  exit={{ scale: 0 }}
-                                  transition={{ duration: 0.2 }}
-                                >
-                                  <Check className="h-4 w-4" />
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </Button>
-                        </motion.div>
-                      </div>
-                    )
-                  })}
-                </React.Fragment>
               ))}
-            </AnimatePresence>
+
+              <AnimatePresence initial={false}>
+                {sortedHabits.map((habit) => (
+                  <React.Fragment key={habit.id}>
+                    <motion.div
+                      className="flex items-center justify-between pr-2"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div
+                                className={cn(
+                                  "flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full",
+                                  habit.priority === 3 && "bg-red-100 text-red-600",
+                                  habit.priority === 2 && "bg-amber-100 text-amber-600",
+                                  habit.priority === 1 && "bg-blue-100 text-blue-600",
+                                )}
+                              >
+                                {getCategoryIcon(habit.category)}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{habit.category}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <span className="truncate font-medium">{habit.name}</span>
+                        {habit.priority === 3 && (
+                          <Badge variant="destructive" className="ml-1 px-1">
+                            <Star className="h-3 w-3" />
+                          </Badge>
+                        )}
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditingHabit(habit)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onDeleteHabit(habit.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </motion.div>
+
+                    {dates.map((date) => {
+                      const isCompleted = habit.completedDates.includes(date.dateString)
+                      return (
+                        <div key={`${habit.id}-${date.dateString}`} className="flex justify-center">
+                          <motion.div whileTap={{ scale: 0.9 }}>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className={cn(
+                                "h-8 w-8 rounded-full border-2 transition-all duration-300",
+                                isCompleted ? "bg-primary border-primary text-primary-foreground" : "bg-background",
+                                date.isToday && !isCompleted && "border-primary border-dashed",
+                              )}
+                              onClick={() => {
+                                if (!isCompleted) {
+                                  // Add confetti animation when completing a habit
+                                  const button = document.createElement("div")
+                                  button.className = "fixed inset-0 pointer-events-none z-50"
+                                  document.body.appendChild(button)
+
+                                  // Clean up after animation
+                                  setTimeout(() => {
+                                    if (button.parentNode) {
+                                      button.parentNode.removeChild(button)
+                                    }
+                                  }, 2000)
+                                }
+                                onToggleCompletion(habit.id, date.dateString)
+                              }}
+                            >
+                              <AnimatePresence mode="wait">
+                                {isCompleted && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    exit={{ scale: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </Button>
+                          </motion.div>
+                        </div>
+                      )
+                    })}
+                  </React.Fragment>
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
         </CardContent>
       </Card>
