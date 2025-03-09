@@ -22,4 +22,7 @@ export default withPWA({
       },
     },
   ],
+  scope: '/',
+  sw: 'sw.js',
+  publicExcludes: ['!icons/**/*'],
 })(nextConfig) 

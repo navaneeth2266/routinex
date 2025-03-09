@@ -19,8 +19,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Trash2, Save, Bell, Download, RefreshCw } from "lucide-react"
+import { Trash2, Save, Bell, Download, RefreshCw, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { checkNotificationsSupport, requestNotificationPermission, scheduleNotification, clearScheduledNotification } from "@/lib/notifications"
 
 // Add BeforeInstallPromptEvent type
 type BeforeInstallPromptEvent = Event & {
@@ -39,6 +40,8 @@ export function Settings({ reminderEnabled, reminderTime, onUpdateSettings }: Se
   const [time, setTime] = useState(reminderTime)
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isAppInstalled, setIsAppInstalled] = useState(false)
+  const [notificationsSupported, setNotificationsSupported] = useState(false)
+  const [notificationsPermission, setNotificationsPermission] = useState<NotificationPermission | null>(null)
   const { toast } = useToast()
 
   // Check if the app is already installed as PWA
@@ -61,7 +64,49 @@ export function Settings({ reminderEnabled, reminderTime, onUpdateSettings }: Se
     }
   }, [])
 
-  const handleSaveSettings = () => {
+  // Check notification support
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const { supported, permissionGranted } = checkNotificationsSupport()
+      setNotificationsSupported(supported)
+      
+      if (supported) {
+        setNotificationsPermission(Notification.permission)
+      }
+    }
+  }, [])
+
+  const handleSaveSettings = async () => {
+    if (enabled && notificationsSupported) {
+      // Request permission if needed
+      if (notificationsPermission !== 'granted') {
+        const granted = await requestNotificationPermission()
+        if (!granted) {
+          toast({
+            title: "Permission Denied",
+            description: "You need to allow notifications for reminders to work.",
+            variant: "destructive",
+          })
+          setEnabled(false)
+          onUpdateSettings(false, time)
+          return
+        }
+        setNotificationsPermission('granted')
+      }
+      
+      // Schedule notification
+      const scheduled = await scheduleNotification(time)
+      if (scheduled) {
+        toast({
+          title: "Reminders Enabled",
+          description: `You'll receive a reminder at ${time} every day.`,
+        })
+      }
+    } else if (!enabled) {
+      // Clear scheduled notifications if reminders are disabled
+      clearScheduledNotification()
+    }
+    
     onUpdateSettings(enabled, time)
   }
 
@@ -108,6 +153,24 @@ export function Settings({ reminderEnabled, reminderTime, onUpdateSettings }: Se
       title: "Install Banner Reset",
       description: "The installation banner will show again on your next visit",
     })
+  }
+
+  const requestPermission = async () => {
+    const granted = await requestNotificationPermission()
+    setNotificationsPermission(granted ? 'granted' : 'denied')
+    
+    if (granted) {
+      toast({
+        title: "Permission Granted",
+        description: "You can now enable reminders for your habits.",
+      })
+    } else {
+      toast({
+        title: "Permission Denied",
+        description: "You need to allow notifications in your browser settings.",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
@@ -175,15 +238,45 @@ export function Settings({ reminderEnabled, reminderTime, onUpdateSettings }: Se
             <CardTitle>Reminders</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {!notificationsSupported && (
+              <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-3 mb-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <AlertCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                      Notifications not supported
+                    </h3>
+                    <p className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                      Your browser doesn't support notifications. Try using Chrome or Firefox for a better experience.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="reminder-toggle">Daily Reminder</Label>
                 <p className="text-sm text-muted-foreground">Receive a reminder to complete your habits</p>
               </div>
-              <Switch id="reminder-toggle" checked={enabled} onCheckedChange={setEnabled} />
+              <Switch 
+                id="reminder-toggle" 
+                checked={enabled} 
+                onCheckedChange={setEnabled}
+                disabled={!notificationsSupported || notificationsPermission === 'denied'} 
+              />
             </div>
 
-            {enabled && (
+            {notificationsSupported && notificationsPermission !== 'granted' && (
+              <Button onClick={requestPermission} variant="outline" size="sm" className="w-full">
+                <Bell className="mr-2 h-4 w-4" />
+                Allow Notifications
+              </Button>
+            )}
+
+            {enabled && notificationsPermission === 'granted' && (
               <div className="pt-2">
                 <Label htmlFor="reminder-time">Reminder Time</Label>
                 <div className="flex items-center gap-2 mt-1.5">
@@ -195,7 +288,7 @@ export function Settings({ reminderEnabled, reminderTime, onUpdateSettings }: Se
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   <Bell className="h-3 w-3 inline-block mr-1" />
-                  Note: This is a demo feature. In a real app, this would send actual notifications.
+                  You'll receive a notification at this time every day.
                 </p>
               </div>
             )}

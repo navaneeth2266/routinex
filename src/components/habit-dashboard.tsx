@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
 import { useMobile } from "@/hooks/use-mobile"
 import { calculateAchievements } from "@/lib/achievements"
+import { initializeNotifications, scheduleNotification, clearScheduledNotification } from "@/lib/notifications"
 
 export function HabitDashboard() {
   const [habits, setHabits] = useState<Habit[]>([])
@@ -87,6 +88,14 @@ export function HabitDashboard() {
       }),
     )
   }, [reminderEnabled, reminderTime])
+
+  // Initialize notifications on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Initialize notifications based on current settings
+      initializeNotifications()
+    }
+  }, [])
 
   const addHabit = (habit: Habit) => {
     console.log("Adding habit:", habit);
